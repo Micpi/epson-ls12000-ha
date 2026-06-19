@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import logging
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
@@ -25,6 +26,8 @@ from .const import (
     DEFAULT_VERIFY_SSL,
     DOMAIN,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class EpsonConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -51,17 +54,25 @@ class EpsonConfigFlow(ConfigFlow, domain=DOMAIN):
             )
             try:
                 await client.test_connection()
-            except EpsonConnectionError:
-                errors["base"] = "cannot_connect"
-            except Exception:  # pylint: disable=broad-except
-                errors["base"] = "unknown"
-            else:
-                await self.async_set_unique_id(f"{DOMAIN}_{user_input[CONF_HOST]}")
-                self._abort_if_unique_id_configured()
-                return self.async_create_entry(
-                    title=user_input.get(CONF_NAME, DEFAULT_NAME),
-                    data=user_input,
+            except EpsonConnectionError as exc:
+                _LOGGER.warning(
+                    "Epson projector is unreachable during setup (%s:%s), creating entry anyway: %s",
+                    user_input[CONF_HOST],
+                    user_input[CONF_PORT],
+                    exc,
                 )
+            except Exception as exc:  # pylint: disable=broad-except
+                _LOGGER.warning(
+                    "Unexpected Epson setup probe error, creating entry anyway: %s",
+                    exc,
+                )
+
+            await self.async_set_unique_id(f"{DOMAIN}_{user_input[CONF_HOST]}")
+            self._abort_if_unique_id_configured()
+            return self.async_create_entry(
+                title=user_input.get(CONF_NAME, DEFAULT_NAME),
+                data=user_input,
+            )
 
         schema = vol.Schema(
             {

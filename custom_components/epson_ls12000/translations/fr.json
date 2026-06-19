@@ -1,5 +1,25 @@
 {
   "config": {
+    "step": {
+      "user": {
+        "description": "Utilisez TCP/ESCVP21 avec le port 3629 pour la plupart des EH-LS12000. Utilisez Web API avec le port 80 seulement si l'API Web Epson est activee.",
+        "data": {
+          "host": "Adresse IP",
+          "port": "Port",
+          "name": "Nom",
+          "connection_type": "Type de connexion",
+          "use_ssl": "Utiliser HTTPS",
+          "verify_ssl": "Verifier le certificat SSL",
+          "password": "Mot de passe Web Control",
+          "scan_interval": "Intervalle d'actualisation"
+        },
+        "data_description": {
+          "host": "Adresse IP ou nom DNS du projecteur.",
+          "connection_type": "tcp = ESC/VP21 direct, web_api = API Web HTTP Epson.",
+          "password": "Necessaire uniquement pour l'authentification Web API."
+        }
+      }
+    },
     "error": {
       "cannot_connect": "Impossible de se connecter au projecteur",
       "unknown": "Erreur inattendue"
