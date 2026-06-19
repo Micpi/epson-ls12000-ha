@@ -1,4 +1,4 @@
-"""Async Epson Web API / ESC/VP21 client."""
+"""Async Epson ESC/VP21 clients."""
 
 from __future__ import annotations
 
@@ -13,7 +13,12 @@ from urllib.parse import quote
 import aiohttp
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import AUTH_USERNAME, DEFAULT_TIMEOUT
+from .const import (
+    AUTH_USERNAME,
+    CONNECTION_TCP,
+    CONNECTION_WEB_API,
+    DEFAULT_TIMEOUT,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -171,6 +176,138 @@ class EpsonWebClient:
             if name.strip() == command:
                 return value.strip().strip(":")
         return None
+
+
+class EpsonTcpClient:
+    """Client for direct ESC/VP21 over TCP."""
+
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        timeout: float = DEFAULT_TIMEOUT,
+    ) -> None:
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+        self._state: dict[str, str] = {}
+        self._lock = asyncio.Lock()
+
+    @property
+    def state(self) -> dict[str, str]:
+        """Return the last known command state."""
+        return dict(self._state)
+
+    async def test_connection(self) -> str | None:
+        """Probe the projector power state."""
+        return await self.query("PWR")
+
+    async def query_many(self, commands: list[str]) -> dict[str, str]:
+        """Query several ESC/VP21 commands."""
+        for command in commands:
+            try:
+                await self.query(command)
+            except EpsonProtocolError as exc:
+                _LOGGER.debug("Epson TCP query unsupported for %s: %s", command, exc)
+        return self.state
+
+    async def query(self, command: str) -> str | None:
+        """Query an ESC/VP21 command without the trailing question mark."""
+        command = command.rstrip("?")
+        response = await self.send_escvp21(f"{command}?")
+        value = EpsonWebClient._extract_value(command, response or "")
+        if value is not None:
+            self._state[command] = value
+        return value
+
+    async def set_command(self, command: str, value: str | int) -> bool:
+        """Set an ESC/VP21 command to a value."""
+        await self.send_escvp21(f"{command} {value}")
+        self._state[command] = str(value)
+        return True
+
+    async def send_raw(self, command: str) -> str | None:
+        """Send a raw ESC/VP21 command."""
+        return await self.send_escvp21(command.strip())
+
+    async def send_escvp21(self, command: str) -> str | None:
+        """Send one command over TCP and read until the ESC/VP21 prompt."""
+        if not command:
+            raise EpsonProtocolError("Empty command")
+
+        async with self._lock:
+            try:
+                reader, writer = await asyncio.wait_for(
+                    asyncio.open_connection(self.host, self.port),
+                    timeout=self.timeout,
+                )
+                try:
+                    await self._read_until_prompt(reader, allow_timeout=True)
+                    writer.write(f"{command}\r".encode("ascii", errors="ignore"))
+                    await writer.drain()
+                    response = await self._read_until_prompt(reader)
+                finally:
+                    writer.close()
+                    try:
+                        await writer.wait_closed()
+                    except (OSError, RuntimeError):
+                        pass
+            except (asyncio.TimeoutError, OSError) as exc:
+                raise EpsonConnectionError(str(exc)) from exc
+
+        text = response.strip().strip(":").strip()
+        _LOGGER.debug("Epson TCP ESC/VP21 %s -> %s", command, text)
+        if text.upper().startswith("ERR"):
+            raise EpsonProtocolError(text)
+        return text or None
+
+    async def _read_until_prompt(
+        self,
+        reader: asyncio.StreamReader,
+        allow_timeout: bool = False,
+    ) -> str:
+        buffer = bytearray()
+        while True:
+            try:
+                raw = await asyncio.wait_for(reader.read(1), timeout=self.timeout)
+            except asyncio.TimeoutError:
+                if allow_timeout:
+                    return ""
+                raise
+            if not raw:
+                if buffer:
+                    return buffer.decode("ascii", errors="ignore")
+                raise EpsonConnectionError("Connection closed")
+            if raw == b":":
+                return buffer.decode("ascii", errors="ignore")
+            buffer.extend(raw)
+
+
+EpsonClient = EpsonWebClient | EpsonTcpClient
+
+
+def create_client(
+    hass,
+    connection_type: str,
+    host: str,
+    port: int,
+    use_ssl: bool = False,
+    verify_ssl: bool = True,
+    password: str | None = None,
+) -> EpsonClient:
+    """Create the configured Epson client."""
+    if connection_type == CONNECTION_WEB_API:
+        return EpsonWebClient(
+            hass=hass,
+            host=host,
+            port=port,
+            use_ssl=use_ssl,
+            verify_ssl=verify_ssl,
+            password=password,
+        )
+    if connection_type == CONNECTION_TCP:
+        return EpsonTcpClient(host=host, port=port)
+    raise EpsonProtocolError(f"Unsupported connection type: {connection_type}")
 
 
 def _parse_digest_challenge(header: str) -> DigestChallenge | None:

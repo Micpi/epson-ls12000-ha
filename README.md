@@ -1,6 +1,6 @@
 # Epson EH-LS12000 for Home Assistant
 
-Custom Home Assistant integration for Epson EH-LS12000 projectors.
+Custom Home Assistant integration for Epson EH-LS12000 projectors using ESC/VP21 over TCP or Epson Web API.
 
 ## Installation with HACS
 
@@ -20,4 +20,5 @@ Custom Home Assistant integration for Epson EH-LS12000 projectors.
 - Buttons for lens shift, lens centering, and recall of projector/lens memories.
 - Raw ESC/VP21 services for commands supported by the projector firmware.
 
-Enable the Epson Web API in the projector network menu before configuring the integration.
+For most EH-LS12000 installations, choose connection type `tcp` and port `3629`.
+Use `web_api` and port `80` only if the projector Web API is enabled and supported by your firmware.

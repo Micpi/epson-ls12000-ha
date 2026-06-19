@@ -9,16 +9,18 @@ from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResu
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.core import callback
 
-from .api import EpsonConnectionError, EpsonWebClient
+from .api import EpsonConnectionError, create_client
 from .const import (
+    CONF_CONNECTION_TYPE,
     CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
     CONF_USE_SSL,
     CONF_VERIFY_SSL,
+    CONNECTION_TCP,
+    CONNECTION_TYPES,
     DEFAULT_NAME,
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
-    DEFAULT_SSL_PORT,
     DEFAULT_USE_SSL,
     DEFAULT_VERIFY_SSL,
     DOMAIN,
@@ -38,8 +40,9 @@ class EpsonConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            client = EpsonWebClient(
+            client = create_client(
                 hass=self.hass,
+                connection_type=user_input[CONF_CONNECTION_TYPE],
                 host=user_input[CONF_HOST],
                 port=user_input[CONF_PORT],
                 use_ssl=user_input[CONF_USE_SSL],
@@ -60,12 +63,14 @@ class EpsonConfigFlow(ConfigFlow, domain=DOMAIN):
                     data=user_input,
                 )
 
-        use_ssl = DEFAULT_USE_SSL
         schema = vol.Schema(
             {
                 vol.Required(CONF_HOST): str,
-                vol.Required(CONF_PORT, default=DEFAULT_SSL_PORT if use_ssl else DEFAULT_PORT): int,
+                vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
                 vol.Required(CONF_NAME, default=DEFAULT_NAME): str,
+                vol.Required(CONF_CONNECTION_TYPE, default=CONNECTION_TCP): vol.In(
+                    CONNECTION_TYPES
+                ),
                 vol.Required(CONF_USE_SSL, default=DEFAULT_USE_SSL): bool,
                 vol.Required(CONF_VERIFY_SSL, default=DEFAULT_VERIFY_SSL): bool,
                 vol.Optional(CONF_PASSWORD): str,

@@ -8,6 +8,7 @@
           "host": "Host",
           "port": "Port",
           "name": "Name",
+          "connection_type": "Connection type",
           "use_ssl": "Use HTTPS",
           "verify_ssl": "Verify SSL certificate",
           "password": "Web Control password",

@@ -10,12 +10,14 @@ from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 
-from .api import EpsonWebClient
+from .api import create_client
 from .const import (
+    CONF_CONNECTION_TYPE,
     CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
     CONF_USE_SSL,
     CONF_VERIFY_SSL,
+    CONNECTION_TCP,
     DEFAULT_NAME,
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
@@ -34,8 +36,9 @@ SERVICE_SET_COMMAND = "set_command"
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Epson EH-LS12000 from a config entry."""
-    client = EpsonWebClient(
+    client = create_client(
         hass=hass,
+        connection_type=entry.data.get(CONF_CONNECTION_TYPE, CONNECTION_TCP),
         host=entry.data[CONF_HOST],
         port=entry.data.get(CONF_PORT, DEFAULT_PORT),
         use_ssl=entry.data.get(CONF_USE_SSL, DEFAULT_USE_SSL),

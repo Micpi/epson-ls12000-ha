@@ -8,7 +8,7 @@ from datetime import timedelta
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import EpsonConnectionError, EpsonWebClient
+from .api import EpsonClient, EpsonConnectionError
 from .const import DEFAULT_SCAN_INTERVAL, DOMAIN, QUERY_COMMANDS
 
 _LOGGER = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ class EpsonDataUpdateCoordinator(DataUpdateCoordinator[dict[str, str]]):
     def __init__(
         self,
         hass: HomeAssistant,
-        client: EpsonWebClient,
+        client: EpsonClient,
         scan_interval: int = DEFAULT_SCAN_INTERVAL,
     ) -> None:
         super().__init__(
