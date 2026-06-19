@@ -1,0 +1,34 @@
+send_command:
+  target:
+  fields:
+    entry_id:
+      selector:
+        text:
+    command:
+      required: true
+      selector:
+        text:
+query_command:
+  target:
+  fields:
+    entry_id:
+      selector:
+        text:
+    command:
+      required: true
+      selector:
+        text:
+set_command:
+  target:
+  fields:
+    entry_id:
+      selector:
+        text:
+    command:
+      required: true
+      selector:
+        text:
+    value:
+      required: true
+      selector:
+        text:

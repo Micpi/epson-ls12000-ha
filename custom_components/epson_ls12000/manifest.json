@@ -1,0 +1,12 @@
+{
+  "domain": "epson_ls12000",
+  "name": "Epson EH-LS12000",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/home-assistant/core",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "requirements": [],
+  "version": "0.1.0"
+}

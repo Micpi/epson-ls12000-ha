@@ -1,0 +1,8 @@
+{
+  "config": {
+    "error": {
+      "cannot_connect": "Impossible de se connecter au projecteur",
+      "unknown": "Erreur inattendue"
+    }
+  }
+}

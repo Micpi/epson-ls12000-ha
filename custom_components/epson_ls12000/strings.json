@@ -1,0 +1,36 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Epson EH-LS12000",
+        "description": "Connect to the Epson Web API. Enable Web API on the projector first.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "name": "Name",
+          "use_ssl": "Use HTTPS",
+          "verify_ssl": "Verify SSL certificate",
+          "password": "Web Control password",
+          "scan_interval": "Scan interval"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the projector",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This projector is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Epson EH-LS12000 options",
+        "data": {
+          "scan_interval": "Scan interval"
+        }
+      }
+    }
+  }
+}

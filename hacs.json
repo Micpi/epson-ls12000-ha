@@ -1,0 +1,5 @@
+{
+  "name": "Epson EH-LS12000",
+  "render_readme": true,
+  "domains": ["media_player", "sensor", "switch", "select", "number", "button"]
+}
