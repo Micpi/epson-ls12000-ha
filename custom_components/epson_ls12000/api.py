@@ -22,6 +22,8 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+ESCVPNET_HANDSHAKE = b"ESC/VP.net\x10\x03\x00\x00\x00\x00"
+
 
 class EpsonConnectionError(Exception):
     """Raised when the Epson projector cannot be reached."""
@@ -242,7 +244,9 @@ class EpsonTcpClient:
                     timeout=self.timeout,
                 )
                 try:
-                    await self._read_until_prompt(reader, allow_timeout=True)
+                    writer.write(ESCVPNET_HANDSHAKE)
+                    await writer.drain()
+                    await self._read_handshake_response(reader)
                     writer.write(f"{command}\r".encode("ascii", errors="ignore"))
                     await writer.drain()
                     response = await self._read_until_prompt(reader)
@@ -260,6 +264,13 @@ class EpsonTcpClient:
         if text.upper().startswith("ERR"):
             raise EpsonProtocolError(text)
         return text or None
+
+    async def _read_handshake_response(self, reader: asyncio.StreamReader) -> None:
+        """Read the ESC/VP.net handshake response when the projector sends one."""
+        try:
+            await asyncio.wait_for(reader.read(len(ESCVPNET_HANDSHAKE)), timeout=1.0)
+        except asyncio.TimeoutError:
+            return
 
     async def _read_until_prompt(
         self,

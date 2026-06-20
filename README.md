@@ -21,4 +21,5 @@ Custom Home Assistant integration for Epson EH-LS12000 projectors using ESC/VP21
 - Raw ESC/VP21 services for commands supported by the projector firmware.
 
 For most EH-LS12000 installations, choose connection type `tcp` and port `3629`.
+This mode performs the Epson ESC/VP.net handshake before sending ESC/VP21 commands.
 Use `web_api` and port `80` only if the projector Web API is enabled and supported by your firmware.
